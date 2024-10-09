@@ -14,6 +14,7 @@ const FormZod = z.object({
 });
 
 const CreateInvoiceSchema = FormZod.omit({ id: true, date: true });
+const UpdateInvoiceSchema = FormZod.omit({ id: true, date: true });
 
 export async function createInvoice(formData: FormData) {
   const data = Object.fromEntries(formData.entries());
@@ -32,6 +33,21 @@ export async function createInvoice(formData: FormData) {
   // Esto se hace mediante la función revalidatePath, que se encarga de buscar todas las rutas que pueden ser
   // recargadas y notificar a Next de que deben ser recargadas. Borrando la caché de la página actual y recargandola
   // hará que Next vuelva a buscar los datos de la base de datos y los actualice.
+  revalidatePath("/dashboard/invoices");
+  redirect("/dashboard/invoices");
+}
+
+export async function updateInvoice(id: string, formData: FormData) {
+  const data = Object.fromEntries(formData.entries());
+
+  const { customerId, status, amount } = CreateInvoiceSchema.parse({ ...data });
+
+  const amountInCents = amount * 100;
+
+  const date = new Date().toISOString().split("T")[0];
+
+  await sql`update invoices set customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}, date = ${date} where id = ${id}`;
+
   revalidatePath("/dashboard/invoices");
   redirect("/dashboard/invoices");
 }
